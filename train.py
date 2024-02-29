@@ -43,7 +43,6 @@ def initialization():
     for node_id, [node_name, d_name, d_path, fraction] in enumerate(cfg['node_list']):
 
         folds, _ = create_folds(d_name, d_path, node_name, fraction, exclude_case=cfg['exclude_case'])
-
         # create training fold
         train_fold = folds[0]
         d_train = Dataset(train_fold, rs_size=cfg['rs_size'], rs_spacing=cfg['rs_spacing'], rs_intensity=cfg['rs_intensity'], label_map=cfg['label_map'], cls_num=cfg['cls_num'], aug_data=True)
@@ -64,8 +63,8 @@ def initialization():
         print('{0:s}: train = {1:d}'.format(node_name, len(d_train)))
         weight_sum += len(d_train)
 
-        local_model = nn.DataParallel(module=UNet(in_ch=1, base_ch=32, cls_num=cfg['cls_num']))
-        local_model.cuda()
+        local_model = UNet(in_ch=1, base_ch=32, cls_num=cfg['cls_num'])
+        # local_model.cuda()
         initial_net(local_model)
 
         optimizer = optim.SGD(local_model.parameters(), lr=cfg['lr'], momentum=0.99, nesterov=True)
@@ -104,8 +103,10 @@ def train_local_model(local_model, optimizer, scheduler, data_loader, epoch_num)
         epoch_loss_num = 0
         batch_id = 0
         for batch in data_loader:
-            image = batch['data'].cuda()
-            label = batch['label'].cuda()
+            image = batch['data']
+            # image = batch['data'].cuda()
+            label = batch['label']
+            # label = batch['label'].cuda()
 
             N = len(image)
 
@@ -164,7 +165,8 @@ def eval_local_model(nodes, data_loader, result_path, mode, commu_iters):
     output_buffer = None
     std_buffer = None
     for batch_id, batch in enumerate(data_loader):
-        image = batch['data'].cuda()
+        image = batch['data']
+        # image = batch['data'].cuda()
         N = len(image)
 
         Ey, Ey2 = None, None
@@ -282,7 +284,7 @@ def train():
 
     print()
     log_line = "Model: {}\nModel parameters: {}\nStart time: {}\nConfiguration:\n".format(
-        nodes[0][0].module.description(), 
+        nodes[0][0].description(), 
         sum(x.numel() for x in nodes[0][0].parameters()), 
         time.strftime("%Y-%m-%d %H:%M:%S", train_start_time))
     for cfg_key in cfg:
@@ -355,7 +357,5 @@ def train():
             finish_time=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
 
 if __name__ == '__main__':
-
-    os.environ['CUDA_VISIBLE_DEVICES'] = cfg['gpu']
 
     train()
