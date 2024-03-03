@@ -2,8 +2,8 @@ cfg = {}
 
 cfg['cls_num'] = 1
 cfg['gpu'] = '0,1,2,3' # to use multiple gpu: cfg['gpu'] = '0,1,2,3'
-cfg['batch_size'] = 16 # training batch size
-cfg['test_batch_size'] = 16 # testing batch size
+cfg['batch_size'] = 8 # training batch size
+cfg['test_batch_size'] = 8 # testing batch size
 cfg['lr'] = 0.01 # base learning rate
 cfg['model_path'] = 'model' # the path where to save the trained model and evaluation results
 cfg['rs_size'] = [160,160,32] # resample size: [x, y, z]

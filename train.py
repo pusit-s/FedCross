@@ -13,7 +13,14 @@ from utils import resample_array, output2file
 from metric import eval
 from config import cfg
 
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+    torch.backends.cudnn.benchmark = True
+else:
+    device = torch.device("cpu")
+
 def initial_net(net):
+    net.to(device)
     for m in net.modules():
         if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv3d):
             nn.init.xavier_normal_(m.weight)
@@ -65,7 +72,9 @@ def initialization():
         weight_sum += len(d_train)
 
         local_model = nn.DataParallel(module=UNet(in_ch=1, base_ch=32, cls_num=cfg['cls_num']))
-        local_model.cuda()
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        local_model = local_model.to(device)
+        # local_model.cuda()
         initial_net(local_model)
 
         optimizer = optim.SGD(local_model.parameters(), lr=cfg['lr'], momentum=0.99, nesterov=True)
@@ -110,7 +119,7 @@ def train_local_model(local_model, optimizer, scheduler, data_loader, epoch_num)
             N = len(image)
 
             pred, pred_logit = local_model(image)
-           
+
             print_line = 'Epoch {0:d}/{1:d} (train) --- Progress {2:5.2f}% (+{3:02d})'.format(
                 epoch_id+1, epoch_num, 100.0 * batch_id * cfg['batch_size'] / len(data_loader.dataset), N)
 
